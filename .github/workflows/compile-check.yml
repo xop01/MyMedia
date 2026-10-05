@@ -1,0 +1,41 @@
+name: Compile check
+
+on:
+  push:
+    branches:
+      - compile-check
+  workflow_dispatch:
+
+jobs:
+  macos-build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -d /Applications/Xcode*.app
+          if [[ -d /Applications/Xcode_27.app ]]; then
+            sudo xcode-select -s /Applications/Xcode_27.app
+          elif [[ -d /Applications/Xcode_26.6.app ]]; then
+            sudo xcode-select -s /Applications/Xcode_26.6.app
+          fi
+          xcodebuild -version
+          xcode-select -p
+
+      - name: Build MyMedia
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project MyMedia.xcodeproj \
+            -scheme MyMedia \
+            -destination 'platform=macOS,arch=arm64' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
