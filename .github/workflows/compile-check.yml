@@ -26,6 +26,22 @@ jobs:
           xcodebuild -version
           xcode-select -p
 
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: SwiftLint
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:$PATH"
+          swiftlint --fix
+          if ! git diff --quiet; then
+            echo "SwiftLint changed files:"
+            git diff
+            exit 1
+          fi
+          swiftlint
+
       - name: Build MyMedia
         shell: bash
         run: |
@@ -40,3 +56,22 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build
+
+      - name: Launch with the built-in library
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$(find "$HOME/Library/Developer/Xcode/DerivedData" -path '*/Build/Products/Debug/MyMedia.app' -type d | head -n 1)"
+          test -n "$APP"
+          echo "Launching $APP"
+          "$APP/Contents/MacOS/MyMedia" > "$RUNNER_TEMP/mymedia.log" 2>&1 &
+          pid="$!"
+          sleep 8
+          if kill -0 "$pid" 2>/dev/null; then
+            echo "MyMedia was still running after 8 seconds."
+            kill "$pid" || true
+          else
+            echo "MyMedia exited."
+            cat "$RUNNER_TEMP/mymedia.log" || true
+            exit 1
+          fi
