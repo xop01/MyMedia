@@ -35,6 +35,7 @@ jobs:
             -scheme MyMedia \
             -destination 'platform=macOS,arch=arm64' \
             -configuration Debug \
+            -skipMacroValidation \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
